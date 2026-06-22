@@ -72,3 +72,77 @@ ST_VERSION_TAG = "scopet-7c3a"
 class ST_LanePhase(IntEnum):
     DORMANT = 0
     CALIBRATING = 1
+    LIVE = 2
+    HOLD = 3
+    SETTLING = 4
+    ARCHIVED = 5
+
+
+class ST_MatchState(IntEnum):
+    QUEUED = 0
+    ACTIVE = 1
+    PAUSED = 2
+    COMPLETE = 3
+    VOIDED = 4
+
+
+class ST_RingTier(IntEnum):
+    OUTER = 0
+    MID = 1
+    INNER = 2
+    BULLSEYE = 3
+    CLEAN_MISS = 4
+
+
+class ST_WindBand(IntEnum):
+    CALM = 0
+    BREEZE = 1
+    GUST = 2
+    SHEAR = 3
+
+
+# ---------------------------------------------------------------------------
+# Fault types (ScopeT-specific; not Arena*, Knights*, Tank*, Ledger*)
+# ---------------------------------------------------------------------------
+
+
+class ScopeTBaseFault(Exception):
+    """Root fault for ScopeT engine."""
+
+
+class STx_RangeMasterOnly(ScopeTBaseFault):
+    pass
+
+
+class STx_SpotterDenied(ScopeTBaseFault):
+    pass
+
+
+class STx_LaneMissing(ScopeTBaseFault):
+    pass
+
+
+class STx_LaneFrozen(ScopeTBaseFault):
+    pass
+
+
+class STx_LaneFull(ScopeTBaseFault):
+    pass
+
+
+class STx_MatchMissing(ScopeTBaseFault):
+    pass
+
+
+class STx_MatchNotLive(ScopeTBaseFault):
+    pass
+
+
+class STx_PlayerUnknown(ScopeTBaseFault):
+    pass
+
+
+class STx_ZeroDisallowed(ScopeTBaseFault):
+    pass
+
+
