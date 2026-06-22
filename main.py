@@ -220,3 +220,77 @@ class ST_ShotTelemetry:
     score_delta: int
     fired_at_tick: int
 
+
+@dataclass
+class ST_ReticleProfile:
+    zoom_level: int
+    parallax_offset: float
+    calibration_progress: int
+    last_adjust_tick: int
+    zeroed: bool
+
+
+@dataclass
+class ST_LoadoutPiece:
+    slot_index: int
+    scope_name: str
+    magnification: int
+    wind_comp: float
+    weight_grams: int
+
+
+@dataclass
+class ST_PlayerCard:
+    player_id: str
+    wallet_ref: str
+    enrolled_lanes: List[int] = field(default_factory=list)
+    total_score: int = 0
+    matches_played: int = 0
+    bullseyes: int = 0
+    reticle: ST_ReticleProfile = field(
+        default_factory=lambda: ST_ReticleProfile(1, 0.0, 0, 0, False)
+    )
+    loadout: List[ST_LoadoutPiece] = field(default_factory=list)
+    stake_wei: int = 0
+    last_seen: float = 0.0
+
+
+@dataclass
+class ST_LaneRecord:
+    lane_id: int
+    phase: int
+    opened_at_tick: int
+    spotter_ref: str
+    enrolled_count: int
+    bounty_pool_wei: int
+    wind_band: int
+    frozen: bool
+    epoch_index: int
+
+
+@dataclass
+class ST_MatchRecord:
+    match_id: str
+    lane_id: int
+    state: int
+    start_tick: int
+    end_tick: int
+    shot_budget: int
+    shots_fired: int
+    participants: List[str] = field(default_factory=list)
+    scoreboard: Dict[str, int] = field(default_factory=dict)
+    winner_id: Optional[str] = None
+
+
+@dataclass
+class ST_LeaderRow:
+    rank: int
+    player_id: str
+    wallet_ref: str
+    score: int
+    bullseyes: int
+    matches: int
+
+
+@dataclass
+class ST_ChainEvent:
