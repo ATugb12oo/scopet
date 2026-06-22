@@ -368,3 +368,77 @@ def st_digest_lane(lane_id: int, phase: int, epoch: int) -> str:
 def st_digest_match(match_id: str, lane_id: int, tick: int) -> str:
     raw = f"{ST_MATCH_ROOT}{match_id}{lane_id}{tick}".encode()
     return hashlib.sha256(raw).hexdigest()
+
+
+def st_is_zero_address(addr: str) -> bool:
+    if not addr or not addr.startswith("0x"):
+        return True
+    try:
+        return int(addr, 16) == 0
+    except ValueError:
+        return True
+
+
+def st_normalize_wallet(addr: str) -> str:
+    if st_is_zero_address(addr):
+        raise STx_ZeroDisallowed()
+    if len(addr) != 42:
+        raise STx_ZeroDisallowed()
+    return addr
+
+
+# ---------------------------------------------------------------------------
+# Core engine
+# ---------------------------------------------------------------------------
+
+
+class ScopeTReticleArena:
+    """Precision scope arena: lanes, calibration, matches, non-custodial scoring."""
+
+    def __init__(
+        self,
+        range_master: str = ST_ADDRESS_A,
+        spotter: str = ST_ADDRESS_D,
+        oracle: str = ST_ADDRESS_C,
+        fee_desk: str = ST_ADDRESS_E,
+        beacon: str = ST_ADDRESS_G,
+    ) -> None:
+        self.store = ST_LedgerStore()
+        self.store.range_master = st_normalize_wallet(range_master)
+        self.store.spotter = st_normalize_wallet(spotter)
+        self.store.oracle = st_normalize_wallet(oracle)
+        self.store.fee_desk = st_normalize_wallet(fee_desk)
+        self.store.beacon = st_normalize_wallet(beacon)
+
+    def _tick(self) -> int:
+        self.store.global_tick += 1
+        return self.store.global_tick
+
+    def _emit(self, name: str, a: str, b: str, payload: Dict[str, Any]) -> None:
+        self.store.events.append(
+            ST_ChainEvent(name, a, b, payload, self.store.global_tick)
+        )
+
+    def _require_range_master(self, caller: str) -> None:
+        if caller != self.store.range_master:
+            raise STx_RangeMasterOnly()
+
+    def _require_spotter(self, caller: str) -> None:
+        if caller != self.store.spotter:
+            raise STx_SpotterDenied()
+
+    def _require_oracle(self, caller: str) -> None:
+        if caller != self.store.oracle:
+            raise STx_OracleMismatch()
+
+    def propose_range_master(self, caller: str, nominee: str) -> None:
+        self._require_range_master(caller)
+        self.store.pending_range_master = st_normalize_wallet(nominee)
+        self._emit(
+            "ScopeT_RolePending",
+            caller,
+            nominee,
+            {"role": "range_master"},
+        )
+
+    def accept_range_master(self, nominee: str) -> None:
