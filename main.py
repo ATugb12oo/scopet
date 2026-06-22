@@ -294,3 +294,77 @@ class ST_LeaderRow:
 
 @dataclass
 class ST_ChainEvent:
+    event_name: str
+    indexed_a: str
+    indexed_b: str
+    payload: Dict[str, Any]
+    block_tick: int
+
+
+@dataclass
+class ST_WindSample:
+    band: int
+    vector_x: float
+    vector_y: float
+    sampled_tick: int
+
+
+# ---------------------------------------------------------------------------
+# In-memory ledger (mirrors on-chain layout without custody)
+# ---------------------------------------------------------------------------
+
+
+class ST_LedgerStore:
+    def __init__(self) -> None:
+        self.lanes: Dict[int, ST_LaneRecord] = {}
+        self.matches: Dict[str, ST_MatchRecord] = {}
+        self.players: Dict[str, ST_PlayerCard] = {}
+        self.shots: Dict[str, ST_ShotTelemetry] = {}
+        self.wind_history: Dict[int, List[ST_WindSample]] = {}
+        self.events: List[ST_ChainEvent] = []
+        self.lane_counter: int = 0
+        self.global_tick: int = 0
+        self.match_serial: int = 0
+        self.fee_bps: int = 125
+        self.grid_frozen: bool = False
+        self.pending_range_master: Optional[str] = None
+        self.range_master: str = ST_ADDRESS_A
+        self.spotter: str = ST_ADDRESS_D
+        self.oracle: str = ST_ADDRESS_C
+        self.fee_desk: str = ST_ADDRESS_E
+        self.beacon: str = ST_ADDRESS_G
+
+
+# ---------------------------------------------------------------------------
+# Wind and scoring helpers
+# ---------------------------------------------------------------------------
+
+
+def st_wind_vector(band: int, tick: int) -> Tuple[float, float]:
+    seed = int(ST_WIND_SEED, 16) ^ (tick * ST_WIND_MODULUS) ^ (band << 9)
+    vx = ((seed & 0xFFFF) / 65535.0 - 0.5) * (band + 1) * 0.42
+    vy = (((seed >> 16) & 0xFFFF) / 65535.0 - 0.5) * (band + 1) * 0.38
+    return round(vx, 6), round(vy, 6)
+
+
+def st_ring_from_impact(dx: float, dy: float) -> Tuple[int, int]:
+    dist = math.hypot(dx, dy)
+    if dist <= ST_BULLSEYE_RADIUS_MM:
+        return int(ST_RingTier.BULLSEYE), ST_SCORE_RING_BASE * 8
+    if dist <= ST_TARGET_RADIUS_MM * 0.18:
+        return int(ST_RingTier.INNER), ST_SCORE_RING_BASE * 5
+    if dist <= ST_TARGET_RADIUS_MM * 0.42:
+        return int(ST_RingTier.MID), ST_SCORE_RING_BASE * 3
+    if dist <= ST_TARGET_RADIUS_MM:
+        return int(ST_RingTier.OUTER), ST_SCORE_RING_BASE
+    return int(ST_RingTier.CLEAN_MISS), 0
+
+
+def st_digest_lane(lane_id: int, phase: int, epoch: int) -> str:
+    packed = struct.pack(">IQI", lane_id, epoch, phase)
+    return hashlib.sha256(packed + bytes.fromhex(ST_LANE_DIGEST[2:])).hexdigest()
+
+
+def st_digest_match(match_id: str, lane_id: int, tick: int) -> str:
+    raw = f"{ST_MATCH_ROOT}{match_id}{lane_id}{tick}".encode()
+    return hashlib.sha256(raw).hexdigest()
