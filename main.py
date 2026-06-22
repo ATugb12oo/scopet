@@ -146,3 +146,77 @@ class STx_ZeroDisallowed(ScopeTBaseFault):
     pass
 
 
+class STx_StakeTooLow(ScopeTBaseFault):
+    pass
+
+
+class STx_CooldownActive(ScopeTBaseFault):
+    pass
+
+
+class STx_ShotBudgetExhausted(ScopeTBaseFault):
+    pass
+
+
+class STx_CalibrationIncomplete(ScopeTBaseFault):
+    pass
+
+
+class STx_LoadoutOverflow(ScopeTBaseFault):
+    pass
+
+
+class STx_ReticleOutOfBounds(ScopeTBaseFault):
+    pass
+
+
+class STx_FeeBasisExceeded(ScopeTBaseFault):
+    pass
+
+
+class STx_PhaseTransitionBlocked(ScopeTBaseFault):
+    pass
+
+
+class STx_SessionExpired(ScopeTBaseFault):
+    pass
+
+
+class STx_DuplicateEnrollment(ScopeTBaseFault):
+    pass
+
+
+class STx_WindTableLocked(ScopeTBaseFault):
+    pass
+
+
+class STx_SettlementPending(ScopeTBaseFault):
+    pass
+
+
+class STx_OracleMismatch(ScopeTBaseFault):
+    pass
+
+
+# ---------------------------------------------------------------------------
+# Records
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class ST_ShotTelemetry:
+    shot_id: str
+    player_id: str
+    lane_id: int
+    match_id: str
+    aim_x: float
+    aim_y: float
+    wind_band: int
+    drift_x: float
+    drift_y: float
+    impact_x: float
+    impact_y: float
+    ring_tier: int
+    score_delta: int
+    fired_at_tick: int
+
